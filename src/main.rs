@@ -97,8 +97,8 @@ fn main() {
 			value_name[ms]
 			"Sets cooldown in milliseconds between every grid update."
 		)
-		(@arg idle_limit: -i --idle-limit
-			short[i]
+		(@arg idle_limit: -i
+			long("idle-limit")
 			+takes_value
 			default_value("2")
 			value_name[int]
@@ -109,11 +109,11 @@ fn main() {
 			value_name[int]
 			"Total number of mines on the grid (Requred for custom games.)"
 		)
-		(@arg no_flags: -f --no-flags "Don't lose time on flagging mines.")
+		(@arg no_flags: -f long("no-flags") "Don't lose time on flagging mines.")
 		(@arg tiles: -t --tiles
 			+takes_value
 			default_value("default")
-			value_name("root/tiles/<dir>")
+			value_name("folder_name")
 			"Sets custom tiles directory."
 		)
 	)
