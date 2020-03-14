@@ -16,6 +16,7 @@ use image::open;
 use itertools::Itertools;
 use ndarray::prelude::*;
 use num_traits::cast::{FromPrimitive, ToPrimitive};
+use rand::prelude::{thread_rng, IteratorRandom};
 use rayon::prelude::*;
 use std::{
 	cmp::min,
@@ -97,13 +98,6 @@ fn main() {
 			value_name[ms]
 			"Sets cooldown in milliseconds between every grid update."
 		)
-		(@arg idle_limit: -i
-			long("idle-limit")
-			+takes_value
-			default_value("2")
-			value_name[int]
-			"Sets maximum of loops to wait before full grid updating."
-		)
 		(@arg mines: -m --mines
 			+takes_value
 			value_name[int]
@@ -123,10 +117,6 @@ fn main() {
 		Some(val) => val.parse().unwrap(),
 		None => 0,
 	};
-	let idle_limit = match matches.value_of("idle_limit") {
-		Some(val) => val.parse().unwrap(),
-		None => 0,
-	};
 	let no_flags = matches.is_present("no_flags");
 	let tiles_dir = format!(
 		"tiles/{}",
@@ -137,6 +127,7 @@ fn main() {
 	);
 
 	// Pre-init
+	let mut rng = thread_rng();
 	let unexplored_tile = Bitmap::new(open(format!("{}/9.png", tiles_dir)).unwrap(), None);
 	let tiles = (0..=8)
 		.map(|n| Bitmap::new(open(format!("{}/{}.png", tiles_dir, n)).unwrap(), None))
@@ -226,8 +217,6 @@ fn main() {
 	to_update.insert(start);
 
 	let mut to_solve = HashSet::new();
-
-	let mut idle_counter = 0;
 
 	// Main loop
 	loop {
@@ -449,7 +438,7 @@ fn main() {
 					to_open.insert(choosen);
 					to_update.insert(choosen);
 					println!(
-						"Opening square with minimal mine probability {:?}: {}.",
+						"Opening square with minimum probability of being mine - {:?}: {}.",
 						choosen, probability
 					);
 				} else {
@@ -465,23 +454,29 @@ fn main() {
 					});
 					println!("Opening squares with 0% and flagging with 100% probability.");
 				}
-			} else if to_open.is_empty() && to_flag.is_empty() {
-				//println!("Nothing to do - terminating.");
-				//break;
-				println!("Nothing to do - waiting...");
-				if to_update.is_empty() && idle_counter >= idle_limit {
-					println!("Idle limit exceeded. Full grid update...");
-					iproduct!(0..x_size, 0..y_size).for_each(|p| {
-						if grid[p] == Square::Unexplored && !solved.contains(&p) {
-							to_update.insert(p);
-						}
+			} else if to_open.is_empty() && to_flag.is_empty() && to_update.is_empty() {
+				let mut all_unexplored = Vec::new();
+				iproduct!(0..x_size, 0..y_size).for_each(|p| {
+					if grid[p] == Square::Unexplored && !solved.contains(&p) {
+						all_unexplored.push(p);
+					}
+				});
+				if all_unexplored.len() == mines_left {
+					println!("Only mines left - flagging remaining squares...");
+					all_unexplored.into_iter().for_each(|p| {
+						to_flag.insert(p);
+						flagged.insert(p);
+						solved.insert(p);
+						mines_left -= 1;
 					});
+				} else {
+					println!("Mission impossible - opening random square.");
+					let choosen = all_unexplored.into_iter().choose(&mut rng).unwrap();
+					to_open.insert(choosen);
+					to_update.insert(choosen);
 				}
-				idle_counter += 1;
-				continue;
 			}
 		}
-		idle_counter = 0;
 
 		to_open.iter().for_each(|pos| {
 			let c = coords[&pos];
