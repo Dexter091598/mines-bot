@@ -420,14 +420,15 @@ fn main() {
 			});
 
 			if !probabilities.is_empty() {
-				let all_zero = probabilities
-					.par_iter()
-					.filter(|(_pos, &probability)| probability.eq(&0.0))
-					.collect::<Vec<_>>();
-				let all_one = probabilities
-					.par_iter()
-					.filter(|(_pos, &probability)| probability.eq(&1.0))
-					.collect::<Vec<_>>();
+				let mut all_zero = Vec::new();
+				let mut all_one = Vec::new();
+				probabilities.iter().for_each(|(&pos, &probability)| {
+					if probability.eq(&0.0) {
+						all_zero.push(pos);
+					} else if probability.eq(&1.0) {
+						all_one.push(pos);
+					}
+				});
 				if all_zero.is_empty() && all_one.is_empty() {
 					let (choosen, probability) = probabilities
 						.into_par_iter()
@@ -442,11 +443,11 @@ fn main() {
 						choosen, probability
 					);
 				} else {
-					all_zero.into_iter().for_each(|(&pos, _probability)| {
+					all_zero.into_iter().for_each(|pos| {
 						to_open.insert(pos);
 						to_update.insert(pos);
 					});
-					all_one.into_iter().for_each(|(&pos, _probability)| {
+					all_one.into_iter().for_each(|pos| {
 						to_flag.insert(pos);
 						flagged.insert(pos);
 						solved.insert(pos);
