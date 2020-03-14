@@ -1,7 +1,7 @@
 # MinesBot
 Solves minesweeper in 3 steps:
 1. Solves obvious squares;
-1. Calculate probabilities and solves squares with 100% probability of being mine or being empty;
+1. Calculates probabilities and solves squares with 100% probability of being mine or being empty;
 1. If there aren't any 100%-squares, opens square with minimum probability of being mine.
 ## Usage
 Can work in any minesweeper game, you just need to:

@@ -281,7 +281,7 @@ fn main() {
 			.copied()
 			.filter(|&pos| {
 				let mut flagged_mines = 0;
-				let mut unexplored = Vec::new();
+				let mut unexplored = Vec::with_capacity(8);
 				neighbors(pos, x_size, y_size).into_iter().for_each(|npos| {
 					if flagged.contains(&npos) {
 						flagged_mines += 1;
@@ -336,7 +336,7 @@ fn main() {
 				.copied()
 				.filter(|&pos| {
 					let mut flagged_mines = 0;
-					let mut unexplored = HashSet::new();
+					let mut unexplored = HashSet::with_capacity(8);
 					neighbors(pos, x_size, y_size).into_iter().for_each(|npos| {
 						if flagged.contains(&npos) {
 							flagged_mines += 1;
@@ -537,7 +537,7 @@ fn update(
 
 #[inline]
 fn neighbors(pos: Pos, x_size: usize, y_size: usize) -> HashSet<Pos> {
-	let mut result = HashSet::new();
+	let mut result = HashSet::with_capacity(8);
 
 	let x = pos.0;
 	let y = pos.1;
