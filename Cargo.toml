@@ -1,6 +1,6 @@
 [package]
 name = "mines-bot"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Armageddon <lunyx1337@gmail.com>"]
 description = "Bot for solving Minesweeper, written in Rust with \"AutoPilot\" automation library."
 edition = "2018"

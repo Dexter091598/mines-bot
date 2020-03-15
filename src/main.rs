@@ -88,7 +88,15 @@ impl PartialEq<u8> for Square {
 */
 
 fn main() {
-	let matches = clap_app!(MinesBot =>
+	let matches = clap_app!((
+		crate_name!()
+			.split("-")
+			.map(|w| {
+				let mut c = w.chars();
+				c.next().unwrap().to_uppercase().collect::<String>() + c.as_str()
+			})
+			.collect::<String>()
+		) =>
 		(version: crate_version!())
 		(author: crate_authors!())
 		(about: crate_description!())
