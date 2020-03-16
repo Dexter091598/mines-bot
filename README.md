@@ -5,6 +5,8 @@ Solves minesweeper in 3 steps:
 1. If there aren't any 100%-squares, opens square with minimum probability of being mine.
 
 ## Usage
+Launch with `-h, --help` to get list of arguments.
+
 Can work in any minesweeper game, you just need to:
 - Collect bitmaps of tiles (see "tiles" folder for examples) to subfolder inside "tiles", and then run bot with `-t, --tiles <folder_name>`
 - If playing custom game, set total number of mines with `-m, --mines <number>`
