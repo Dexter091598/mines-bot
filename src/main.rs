@@ -111,7 +111,7 @@ fn main() {
 			value_name[int]
 			"Total number of mines on the grid (Requred for custom games.)"
 		)
-		(@arg no_flags: -f long("no-flags") "Don't lose time on flagging mines.")
+		(@arg no_flags: -f --("no-flags") "Don't lose time on flagging mines.")
 		(@arg tiles: -t --tiles
 			+takes_value
 			default_value("default")
