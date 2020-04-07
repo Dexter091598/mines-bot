@@ -90,7 +90,7 @@ impl PartialEq<u8> for Square {
 fn main() {
 	let matches = clap_app!((
 		crate_name!()
-			.split("-")
+			.split('-')
 			.map(|w| {
 				let mut c = w.chars();
 				c.next().unwrap().to_uppercase().collect::<String>() + c.as_str()
@@ -362,29 +362,33 @@ fn main() {
 				})
 				.collect();
 			// union some sectors
-			if sectors.len() >= 2 {
+			loop {
 				let mut unioned = sectors
 					.clone()
 					.iter()
-					.filter(|s| s.len() >= 2)
-					.enumerate()
 					.combinations(2)
-					.filter_map(|c| {
-						let c1 = c[0];
-						let c2 = c[1];
-						let s1 = c1.1;
-						let s2 = c2.1;
-						if !s1.is_disjoint(&s2) {
-							sectors.remove(c1.0);
-							sectors.remove(c2.0);
-							return Some(s1.union(&s2).cloned().collect());
+					.filter_map(|s| {
+						let s1 = s[0];
+						let s2 = s[1];
+						if !s1.is_disjoint(&s2)
+							|| iproduct!(s1, s2).any(|(d1, d2)| d1.unexplored.is_disjoint(&d2.unexplored))
+						{
+							if let Some(i) = sectors.iter().position(|s| s == s1) {
+								sectors.remove(i);
+							}
+							if let Some(i) = sectors.iter().position(|s| s == s2) {
+								sectors.remove(i);
+							}
+							Some(s1.union(&s2).cloned().collect())
+						} else {
+							None
 						}
-						None
 					})
 					.collect::<Vec<HashSet<Detector>>>();
-				if !unioned.is_empty() {
-					sectors.append(&mut unioned);
+				if unioned.is_empty() {
+					break;
 				}
+				sectors.append(&mut unioned);
 			}
 			// creating all possible solutions for each sector
 			sectors.iter().for_each(|s| {
@@ -505,6 +509,7 @@ fn main() {
 	}
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update(
 	positions: &mut HashSet<Pos>,
 	to_solve: &mut HashSet<Pos>,
