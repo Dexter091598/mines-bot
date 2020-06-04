@@ -1,5 +1,3 @@
 target/
 Cargo.lock
-
 mines-bot.exe
-.rustfmt.toml
