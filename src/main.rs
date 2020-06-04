@@ -10,7 +10,7 @@ extern crate log;
 use autopilot::{
 	bitmap::{capture_screen, capture_screen_portion, Bitmap},
 	geometry::{Point, Rect, Size},
-	mouse::{click, move_to, smooth_move, Button},
+	mouse::{click, move_to, Button},
 };
 use image::open;
 use itertools::Itertools;
@@ -118,13 +118,13 @@ fn main() {
 		)
 		(@arg smooth_move: -s --smooth
 			+takes_value
-			value_name("duration")
+			value_name("speed")
 			"Smooth mouse movement."
 		)
 	)
 	.get_matches();
 
-	let (smooth, smooth_duration) = {
+	let (smooth, smooth_speed) = {
 		if matches.is_present("smooth_move") {
 			(
 				true,
@@ -394,60 +394,44 @@ fn main() {
 				)
 			};
 
-			to_solve = to_solve
-				.iter()
-				.copied()
-				.filter(|&pos| {
-					if in_sector.contains(&pos) {
-						return false;
+			to_solve.iter().for_each(|&pos| {
+				if in_sector.contains(&pos) {
+					return;
+				}
+
+				let (detector, pos_neighbors) = get_neighbors(pos);
+
+				if pos_neighbors.is_empty() {
+					in_sector.insert(pos);
+				} else {
+					let mut seed_set = pos_neighbors;
+					seed_set.insert(detector.clone());
+
+					match sectors.get_mut(s) {
+						Some(sector) => sector.push(detector),
+						None => sectors.push(vec![detector]),
 					}
 
-					let (detector, pos_neighbors) = get_neighbors(pos);
-					/*let mut flagged_mines = 0;
-					let mut unexplored =
-						HashSet::with_capacity_and_hasher(8, BuildHasherDefault::<FxHasher>::default());
-					neighbors(pos, size).into_iter().for_each(|npos| {
-						if flagged.contains(&npos) {
-							flagged_mines += 1;
-						} else if grid[npos] == Square::Unexplored {
-							unexplored.insert(npos);
-						}
-					});*/
+					while !seed_set.is_empty() {
+						seed_set.clone().into_iter().for_each(|q| {
+							if !in_sector.contains(&q.pos) {
+								let q_neighbors = get_neighbors(q.pos).1;
 
-					if pos_neighbors.is_empty() {
-						in_sector.insert(pos);
-						false
-					} else {
-						let mut seed_set = pos_neighbors;
-						seed_set.insert(detector.clone());
-
-						match sectors.get_mut(s) {
-							Some(sector) => sector.push(detector),
-							None => sectors.push(vec![detector]),
-						}
-
-						while !seed_set.is_empty() {
-							seed_set.clone().into_iter().for_each(|q| {
-								if !in_sector.contains(&q.pos) {
-									let q_neighbors = get_neighbors(q.pos).1;
-
-									if !q_neighbors.is_empty() {
-										q_neighbors.iter().for_each(|n| {
-											seed_set.insert(n.clone());
-										});
-									}
-
-									sectors.get_mut(s).unwrap().push(q.clone());
-									in_sector.insert(q.pos);
+								if !q_neighbors.is_empty() {
+									q_neighbors.iter().for_each(|n| {
+										seed_set.insert(n.clone());
+									});
 								}
-								seed_set.remove(&q);
-							});
-						}
-						s += 1;
-						true
+
+								sectors.get_mut(s).unwrap().push(q.clone());
+								in_sector.insert(q.pos);
+							}
+							seed_set.remove(&q);
+						});
 					}
-				})
-				.collect();
+					s += 1;
+				}
+			});
 
 			// creating all possible solutions for each sector
 			trace!("creating all possible solutions for each sector");
@@ -558,7 +542,7 @@ fn main() {
 
 				let destination = Point::new(c.x + half_tile, c.y + half_tile);
 				if smooth {
-					smooth_move(destination, smooth_duration)
+					smooth_move2(destination, smooth_speed)
 				} else {
 					move_to(destination)
 				}
@@ -670,3 +654,39 @@ fn flag_square(pos: Pos, coords: &HashMap<Pos, Point>, half_tile: f64) {
 	click(Button::Right, Some(0));
 }
 */
+
+use autopilot::{
+	mouse::{location, MouseError},
+	screen,
+};
+use std::time::Instant;
+
+pub fn smooth_move2(destination: Point, speed: Option<f64>) -> Result<(), MouseError> {
+	if !screen::is_point_visible(destination) {
+		return Err(MouseError::OutOfBounds);
+	}
+
+	let start_position = location();
+
+	let dx = destination.x - start_position.x;
+	let dy = destination.y - start_position.y;
+	let distance = dx * dx + dy * dy;
+	let mult = speed.map_or(1.0, |speed| speed / 1000.0) / distance.sqrt();
+
+	let vec_x = dx * mult;
+	let vec_y = dy * mult;
+
+	let time = Instant::now();
+	loop {
+		let delta = time.elapsed().as_millis() as f64;
+
+		let position = Point::new(start_position.x + vec_x * delta, start_position.y + vec_y * delta);
+		if (position.x - start_position.x).powi(2) + (position.y - start_position.y).powi(2) >= distance {
+			move_to(destination)?;
+			break;
+		}
+		move_to(position)?;
+	}
+
+	Ok(())
+}
