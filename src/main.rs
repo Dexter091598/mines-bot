@@ -496,9 +496,9 @@ fn main() {
 				let mut all_zero = Vec::new();
 				let mut all_one = Vec::new();
 				probabilities.iter().for_each(|(&pos, &probability)| {
-					if probability.eq(&0.0) {
+					if probability < f64::EPSILON {
 						all_zero.push(pos);
-					} else if probability.eq(&1.0) {
+					} else if (probability - 1.0).abs() < f64::EPSILON {
 						all_one.push(pos);
 					}
 				});
