@@ -19,6 +19,5 @@ In addition:
 All tile sets must be located in `root/tiles/`
 
 Pre-gathered tile sets:
-- `default`: Minesweeper X;
-- `clone`: Minesweeper Clone;
+- `default`: "Minesweeper X" or "Minesweeper Clone";
 - `online`: minesweeperonline.com.
