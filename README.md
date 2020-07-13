@@ -14,6 +14,7 @@ Can work in any minesweeper game, you just need to:
 In addition:
 - If bot updates grid faster than needed, you can set delay between updates with `-c, --cooldown <milliseconds>`
 - You can activate no flags mode with `-f, --no-flags`
+- Smooth mouse movement can be enabled via `-s, --smooth <speed>`, where speed is in *pixels per second*
 
 ## Tile sets
 All tile sets must be located in `root/tiles/`
