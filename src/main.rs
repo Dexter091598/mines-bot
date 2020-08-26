@@ -373,6 +373,7 @@ fn main() {
 			debug!("All mines founded - opening remaining squares...");
 			if instant {
 				iproduct!(0..x_size, 0..y_size)
+					.par_bridge()
 					.filter(|p| grid[*p] == Square::Unexplored && !solved.contains(p))
 					.for_each(|pos| {
 						open_square(pos, &coords, half_tile);
@@ -380,8 +381,9 @@ fn main() {
 				debug!("Game finished: win.");
 				break;
 			} else {
-				to_open.extend(
+				to_open.par_extend(
 					iproduct!(0..x_size, 0..y_size)
+						.par_bridge()
 						.filter(|p| grid[*p] == Square::Unexplored && !solved.contains(p)),
 				);
 			}
@@ -495,6 +497,7 @@ fn main() {
 							s_unexplored
 								.iter()
 								.combinations(n)
+								.par_bridge()
 								.filter(|sol| {
 									s.par_iter().all(|dt| {
 										dt.unexplored
@@ -617,8 +620,9 @@ fn main() {
 				}
 			} else if to_update.is_empty() {
 				let mut all_unexplored = Vec::new();
-				all_unexplored.extend(
+				all_unexplored.par_extend(
 					iproduct!(0..x_size, 0..y_size)
+						.par_bridge()
 						.filter(|p| grid[*p] == Square::Unexplored && !solved.contains(p)),
 				);
 				if all_unexplored.len() == mines_left {
@@ -695,7 +699,7 @@ fn main() {
 					let destination = Point::new(c.x + half_tile, c.y + half_tile);
 
 					smooth_move2(destination, smooth_speed)
-						.unwrap_or_else(|_| panic!("Can't move cursor to {:?}", destination));
+						.unwrap_or_else(|err| error!("Can't move cursor to {:?}: {}", destination, err));
 					click(if left { Button::Left } else { Button::Right }, Some(0));
 
 					loc_x = destination.x as usize;
@@ -736,10 +740,6 @@ fn update(
 	cooldown: u64,
 ) -> bool {
 	let mut checked = FxHashSet::default();
-	// let mut to_retry = to_update.into_par_iter().copied().collect::<FxIndexSet<Pos>>();
-
-	// while !to_retry.is_empty() {
-	// let mut positions = to_retry.drain(..).into_par_iter().collect::<FxIndexSet<Pos>>();
 	let mut positions = to_update.into_par_iter().copied().collect::<FxIndexSet<Pos>>();
 
 	sleep(Duration::from_millis(cooldown));
@@ -773,12 +773,12 @@ fn update(
 					}
 
 					// retry = false;
-					// break;
+					break;
 				}
 			}
 
 			/*if retry {
-				to_retry.insert(pos);
+				positions.insert(pos);
 			}*/
 		}
 		// }
